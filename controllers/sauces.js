@@ -118,7 +118,13 @@ exports.modifySauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     // si la sauce existe
     .then((sauce) => {
-      // l'id du créateur de la sauce doit etre le meme que celui identifié par le token 
+      //la valeur de heat ne pourra pas être modifié dans postman si elle n'est pas entre 0 et 10 ( on limite l'impact d'un hack)
+      // c'est placé à cet endroit car ça a valeur de constante qui doit être avant la logique dans laquelle elle est utilisée
+      if (req.body.heat < 0 || req.body.heat > 10) {
+        req.body.heat = sauce.heat;
+      }
+      console.log(req.body.heat);
+      // l'id du créateur de la sauce doit etre le meme que celui identifié par le token
       if (sauce.userId !== req.auth.userId) {
         // reponse en status 403 Forbidden avec message json
         res.status(403).json("unauthorized request");
@@ -146,14 +152,12 @@ exports.modifySauce = (req, res, next) => {
               req.file.filename
             }`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce dans postman
-            //la valeur de heat ne pourrons pas être modifié dans postman
             //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
-            heat: sauce.heat,
-            likes: sauce.likes, 
-            dislikes: sauce.dislikes, 
-            usersLiked: sauce.usersLiked, 
-            usersDisliked: sauce.usersDisliked 
+            likes: sauce.likes,
+            dislikes: sauce.dislikes,
+            usersLiked: sauce.usersLiked,
+            usersDisliked: sauce.usersDisliked,
           };
           // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
           // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
@@ -180,14 +184,12 @@ exports.modifySauce = (req, res, next) => {
               "host"
             )}/images/defaut/imagedefaut.png`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
-            //la valeur de heat ne pourrons pas être modifié dans postman
             //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
-            heat: sauce.heat,
-            likes: sauce.likes, 
-            dislikes: sauce.dislikes, 
-            usersLiked: sauce.usersLiked, 
-            usersDisliked: sauce.usersDisliked 
+            likes: sauce.likes,
+            dislikes: sauce.dislikes,
+            usersLiked: sauce.usersLiked,
+            usersDisliked: sauce.usersDisliked,
           };
           // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
           // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
@@ -211,14 +213,12 @@ exports.modifySauce = (req, res, next) => {
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           ...req.body,
           //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
-          //la valeur de heat ne pourrons pas être modifié dans postman
           //like et tableau ne pourront pas être modifiés dans postman
-          userId: req.auth.userId, 
-          heat: sauce.heat,
-          likes: sauce.likes, 
-          dislikes: sauce.dislikes, 
-          usersLiked: sauce.usersLiked, 
-          usersDisliked: sauce.usersDisliked  
+          userId: req.auth.userId,
+          likes: sauce.likes,
+          dislikes: sauce.dislikes,
+          usersLiked: sauce.usersLiked,
+          usersDisliked: sauce.usersDisliked,
         };
         // on met à jour la sauce
         Sauce.updateOne(
@@ -366,6 +366,6 @@ exports.likeSauce = (req, res, next) => {
           }
         });
     })
-    // si erreur envoit un status 404 Not Found et l'erreur en json 
+    // si erreur envoit un status 404 Not Found et l'erreur en json
     .catch((error) => res.status(404).json({ error }));
 };
