@@ -146,7 +146,12 @@ exports.modifySauce = (req, res, next) => {
               req.file.filename
             }`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce dans postman
+            //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
+            likes: sauce.likes, 
+            dislikes: sauce.dislikes, 
+            usersLiked: sauce.usersLiked, 
+            usersDisliked: sauce.usersDisliked 
           };
           // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
           // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
@@ -173,7 +178,12 @@ exports.modifySauce = (req, res, next) => {
               "host"
             )}/images/defaut/imagedefaut.png`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
+            //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
+            likes: sauce.likes, 
+            dislikes: sauce.dislikes, 
+            usersLiked: sauce.usersLiked, 
+            usersDisliked: sauce.usersDisliked 
           };
           // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
           // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
@@ -197,7 +207,12 @@ exports.modifySauce = (req, res, next) => {
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           ...req.body,
           //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
-          userId: req.auth.userId,
+          //like et tableau ne pourront pas être modifiés dans postman
+          userId: req.auth.userId, 
+          likes: sauce.likes, 
+          dislikes: sauce.dislikes, 
+          usersLiked: sauce.usersLiked, 
+          usersDisliked: sauce.usersDisliked 
         };
         // on met à jour la sauce
         Sauce.updateOne(
