@@ -146,8 +146,10 @@ exports.modifySauce = (req, res, next) => {
               req.file.filename
             }`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce dans postman
+            //la valeur de heat ne pourrons pas être modifié dans postman
             //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
+            heat: sauce.heat,
             likes: sauce.likes, 
             dislikes: sauce.dislikes, 
             usersLiked: sauce.usersLiked, 
@@ -178,8 +180,10 @@ exports.modifySauce = (req, res, next) => {
               "host"
             )}/images/defaut/imagedefaut.png`,
             //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
+            //la valeur de heat ne pourrons pas être modifié dans postman
             //like et tableau ne pourront pas être modifiés dans postman
             userId: req.auth.userId,
+            heat: sauce.heat,
             likes: sauce.likes, 
             dislikes: sauce.dislikes, 
             usersLiked: sauce.usersLiked, 
@@ -207,12 +211,14 @@ exports.modifySauce = (req, res, next) => {
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           ...req.body,
           //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
+          //la valeur de heat ne pourrons pas être modifié dans postman
           //like et tableau ne pourront pas être modifiés dans postman
           userId: req.auth.userId, 
+          heat: sauce.heat,
           likes: sauce.likes, 
           dislikes: sauce.dislikes, 
           usersLiked: sauce.usersLiked, 
-          usersDisliked: sauce.usersDisliked 
+          usersDisliked: sauce.usersDisliked  
         };
         // on met à jour la sauce
         Sauce.updateOne(
