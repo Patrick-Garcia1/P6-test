@@ -159,7 +159,6 @@ exports.modifySauce = (req, res, next) => {
           req.file.mimetype === "image/tif" ||
           req.file.mimetype === "image/webp"
         ) {
-          console.log(sauce.body.imageUrl);
           // on détermine le nom de lancien fichier image
           const filename = sauce.imageUrl.split("/images/")[1];
           // on efface le fichier image qui doit se faire remplacer
@@ -221,8 +220,13 @@ exports.modifySauce = (req, res, next) => {
         // en cas d'erreur un status 400 Bad Request et l'erreur en json
         .catch((error) => res.status(400).json({ error }));
     })
-    // en cas d'erreur 404 Not Found et erreur en json
-    .catch((error) => res.status(404).json({ error: 'dtc' }));
+    // en cas d'erreur 
+    .catch((error) => { 
+      // le fichier de la requete a été créé avec multer donc on l'éfface
+      fs.unlink(`images/${req.file.filename}`, () => {
+      });
+    // erreur 404 Not Found indique l'erreur en json
+    res.status(404).json({ error })});
 };
 //----------------------------------------------------------------------------------
 // LOGIQUE DELETESAUCE
