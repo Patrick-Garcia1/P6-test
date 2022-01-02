@@ -324,17 +324,17 @@ exports.likeSauce = (req, res, next) => {
         // enlève 1 vote positif
         sauce.likes -= 1;
         // filtre/enlève l'id du votant du tableau usersLiked
-        sauce.usersLiked = unlike.filter(function (f) {
-          f != votant;
-        });
+        const nouveauUsersLiked = like.filter((f) => f != votant);
+        // on actualise le tableau
+        sauce.usersLiked = nouveauUsersLiked;
         // si l'user a voté négativement et veut annuler son vote
       } else if (valeurVote === -1 && req.body.like === 0) {
         // enlève un vote négatif
         sauce.dislikes -= 1;
         // filtre/enlève l'id du votant du tableau usersDisliked
-        sauce.usersDisliked = unlike.filter(function (f) {
-          f != votant;
-        });
+        const nouveauUsersDisliked = unlike.filter((f) => f != votant);
+        // on actualise le tableau
+        sauce.usersDisliked = nouveauUsersDisliked;
         // si l'user n'a pas voté avant et vote négativement
       } else if (valeurVote === 0 && req.body.like === -1) {
         // ajoute 1 vote positif à unlikes
