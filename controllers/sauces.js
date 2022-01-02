@@ -35,12 +35,19 @@ exports.createSauce = (req, res, next) => {
   // on extrait le sauce de la requete via le parse
   // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
   const sauceObject = JSON.parse(req.body.sauce);
+  // constant qui servira à initialiser certains paramètres à la création
+  const initialisation = {
+    likes: 0,
+    dislikes: 0,
+    usersLiked: [],
+    usersDisliked: [],
+  };
   // l'user id de la requete doit etre le meme que l'id associé au token (si sur postman une personne rentre dans la data un autre id que celui du token)
   // si la sécurité du token et de l'user id est compromit, revoir authentification via captcha ou autre système plus accessible car risque de keylogger
   // il faut adapter la sécurité au type de donnée potentiellement recueillie malhonnetement par un tier ou donnée délivrée nuisible par usurpation via ce tier
   if (sauceObject.userId !== req.auth.userId) {
     // reponse en status 403 Forbidden avec message json
-    res.status(403).json("unauthorized request");
+    return res.status(403).json("unauthorized request");
     // détermine si le fichier envoyé est bien une image https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
   } else if (
     req.file.mimetype === "image/jpeg" ||
@@ -62,12 +69,13 @@ exports.createSauce = (req, res, next) => {
       imageUrl: `${req.protocol}://${req.get("host")}/images/${
         req.file.filename
       }`,
-      // on initialise certains paramètres à la création
-      likes: 0,
-      dislikes: 0,
-      usersLiked: [],
-      usersDisliked: [],
+      ...initialisation,
     });
+    // si problème avec valeur heat (postman) initialisation de sa valeur
+    if (sauce.heat < 0 || sauce.heat > 10) {
+      sauce.heat = 0;
+      console.log("valeur heat invalide, heat initialisé");
+    }
     // enregistre l'objet dans la base de donnée
     sauce
       .save()
@@ -90,12 +98,13 @@ exports.createSauce = (req, res, next) => {
       imageUrl: `${req.protocol}://${req.get(
         "host"
       )}/images/defaut/imagedefaut.png`,
-      // on initialise certains paramètres à la création
-      likes: 0,
-      dislikes: 0,
-      usersLiked: [],
-      usersDisliked: [],
+      ...initialisation,
     });
+    // si problème avec valeur heat (postman) initialisation de sa valeur
+    if (sauce.heat < 0 || sauce.heat > 10) {
+      sauce.heat = 0;
+      console.log("valeur heat invalide, heat initialisé");
+    }
     // enregistre l'objet dans la base de donnée
     sauce
       .save()
@@ -118,16 +127,23 @@ exports.modifySauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     // si la sauce existe
     .then((sauce) => {
-      //la valeur de heat ne pourra pas être modifié dans postman si elle n'est pas entre 0 et 10 ( on limite l'impact d'un hack)
-      // c'est placé à cet endroit car ça a valeur de constante qui doit être avant la logique dans laquelle elle est utilisée
-      if (req.body.heat < 0 || req.body.heat > 10) {
-        req.body.heat = sauce.heat;
-      }
-      console.log(req.body.heat);
+      // cette variable permettra de traverser le scope pour réduire le code
+      var sauceBot;
+      //constante de valeur heat de la sauce avant modification, servira si le nouveau heat a une valeur inacceptable (via postman)
+      const heatAvant = sauce.heat;
+      //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
+      //like et tableau ne pourront pas être modifiés dans postman
+      const immuable = {
+        userId: req.auth.userId,
+        likes: sauce.likes,
+        dislikes: sauce.dislikes,
+        usersLiked: sauce.usersLiked,
+        usersDisliked: sauce.usersDisliked,
+      };
       // l'id du créateur de la sauce doit etre le meme que celui identifié par le token
       if (sauce.userId !== req.auth.userId) {
         // reponse en status 403 Forbidden avec message json
-        res.status(403).json("unauthorized request");
+        return res.status(403).json("unauthorized request");
         // si il y a un fichier avec la demande de modification
       } else if (req.file) {
         // on vérifie que c'est bien une image https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
@@ -151,28 +167,9 @@ exports.modifySauce = (req, res, next) => {
             imageUrl: `${req.protocol}://${req.get("host")}/images/${
               req.file.filename
             }`,
-            //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce dans postman
-            //like et tableau ne pourront pas être modifiés dans postman
-            userId: req.auth.userId,
-            likes: sauce.likes,
-            dislikes: sauce.dislikes,
-            usersLiked: sauce.usersLiked,
-            usersDisliked: sauce.usersDisliked,
+            ...immuable,
           };
-          // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
-          // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
-          Sauce.updateOne(
-            { _id: req.params.id },
-            { ...sauceObject, _id: req.params.id }
-          )
-            // retourne une promesse avec status 201 Created et message en json
-            .then(() =>
-              res
-                .status(201)
-                .json({ message: "modified sauce (FR)Objet modifié !" })
-            )
-            // en cas d'erreur un status 400 Bad Request et l'erreur en json
-            .catch((error) => res.status(400).json({ error }));
+          sauceBot = sauceObject;
           // si le fichier n'est pas une image
         } else {
           // on récupère avec le parse req.body.sauce et on y ajoute la nouvelle image
@@ -183,28 +180,9 @@ exports.modifySauce = (req, res, next) => {
             imageUrl: `${req.protocol}://${req.get(
               "host"
             )}/images/defaut/imagedefaut.png`,
-            //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
-            //like et tableau ne pourront pas être modifiés dans postman
-            userId: req.auth.userId,
-            likes: sauce.likes,
-            dislikes: sauce.dislikes,
-            usersLiked: sauce.usersLiked,
-            usersDisliked: sauce.usersDisliked,
+            ...immuable,
           };
-          // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
-          // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
-          Sauce.updateOne(
-            { _id: req.params.id },
-            { ...sauceObject, _id: req.params.id }
-          )
-            // retourne une promesse avec status 201 Created et message en json
-            .then(() =>
-              res
-                .status(201)
-                .json({ message: "modified sauce (FR)Objet modifié !" })
-            )
-            // en cas d'erreur un status 400 Bad Request et l'erreur en json
-            .catch((error) => res.status(400).json({ error }));
+          sauceBot = sauceObject;
         }
         // si il n'y a pas de fichier avec la modification (ps: il garde son image injectée à la création)
       } else {
@@ -212,28 +190,29 @@ exports.modifySauce = (req, res, next) => {
           // on récupère avec le parse req.body.sauce et on y ajoute la nouvelle image
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           ...req.body,
-          //l'user sera celui validé par le token, on ne pourra pas modifier l'appartenance de la sauce
-          //like et tableau ne pourront pas être modifiés dans postman
-          userId: req.auth.userId,
-          likes: sauce.likes,
-          dislikes: sauce.dislikes,
-          usersLiked: sauce.usersLiked,
-          usersDisliked: sauce.usersDisliked,
+          ...immuable,
         };
-        // on met à jour la sauce
-        Sauce.updateOne(
-          { _id: req.params.id },
-          { ...sauceObject, _id: req.params.id }
-        )
-          // retourne une promesse avec status 201 Created et message en json
-          .then(() =>
-            res
-              .status(201)
-              .json({ message: "modified sauce (FR)Objet modifié !" })
-          )
-          // en cas d'erreur un status 400 Bad Request et l'erreur en json
-          .catch((error) => res.status(400).json({ error }));
+        sauceBot = sauceObject;
       }
+      // si problème avec valeur heat (postman) sa valeur restera celle avant la requête
+      if (sauceBot.heat < 0 || sauceBot.heat > 10) {
+        sauceBot.heat = heatAvant;
+        console.log("valeur heat invalide, ancienne valeur heat conservée");
+      }
+      // modifie un sauce dans la base de donnée, 1er argument c'est l'objet qu'on modifie avec id correspondant à l'id de la requete
+      // et le deuxième argument c'est la nouvelle version de l'objet qui contient le sauce qui est dans le corp de la requete et que _id correspond à celui des paramètres
+      Sauce.updateOne(
+        { _id: req.params.id },
+        { ...sauceBot, _id: req.params.id }
+      )
+        // retourne une promesse avec status 201 Created et message en json
+        .then(() =>
+          res
+            .status(201)
+            .json({ message: "modified sauce (FR)Objet modifié !" })
+        )
+        // en cas d'erreur un status 400 Bad Request et l'erreur en json
+        .catch((error) => res.status(400).json({ error }));
     })
     // en cas d'erreur 404 Not Found et erreur en json
     .catch((error) => res.status(404).json({ error }));
@@ -254,7 +233,7 @@ exports.deleteSauce = (req, res, next) => {
       // l'id du créateur de la sauce doit etre le meme que celui identifié par le token sinon
       if (sauce.userId !== req.auth.userId) {
         // reponse en status 403 Forbidden avec message json
-        res.status(403).json("unauthorized request");
+        return res.status(403).json("unauthorized request");
         // et si nom de l'image sauce est différante de celle par defaut
       } else if (nomImage != imDefaut) {
         // on créait un tableau via l'url et en séparant la partie '/images' et ensuite on recupère l'indice 1 du tableau qui est le nom du fichier
