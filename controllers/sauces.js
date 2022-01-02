@@ -7,11 +7,14 @@ const { error } = require("console");
 // LOGIQUE GETALLSAUCE
 //----------------------------------------------------------------------------------
 // accède à toutes les sauces
+// une personne avec un webtokenvalide accède à ces informations puisque seulement le token identifie et donne accés
 exports.getAllSauce = (req, res, next) => {
   // on veut la liste complète de Sauce alors on utilise find() sans argument
   Sauce.find()
     //  status 200 OK et sauces en json
-    .then((sauces) => res.status(200).json(sauces))
+    .then((sauces) => {
+      res.status(200).json(sauces);
+    })
     // erreur un status 400 Bad Request et l'erreur en json
     .catch((error) => res.status(400).json({ error }));
 };
@@ -19,6 +22,7 @@ exports.getAllSauce = (req, res, next) => {
 // LOGIQUE GETONESAUCE
 //----------------------------------------------------------------------------------
 // accède à une sauce
+// une personne avec un webtokenvalide accède à ces informations puisque seulement le token identifie et donne accés
 exports.getOneSauce = (req, res, next) => {
   // on utilise le modele mangoose et findOne pour trouver un objet via la comparaison req.params.id
   Sauce.findOne({ _id: req.params.id })
@@ -162,8 +166,7 @@ exports.modifySauce = (req, res, next) => {
           // on détermine le nom de lancien fichier image
           const filename = sauce.imageUrl.split("/images/")[1];
           // on efface le fichier image qui doit se faire remplacer
-          fs.unlink(`images/${filename}`, () => {
-          });
+          fs.unlink(`images/${filename}`, () => {});
           // on extrait le sauce de la requete via le parse
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           const sauceObject = {
@@ -177,6 +180,8 @@ exports.modifySauce = (req, res, next) => {
           sauceBot = sauceObject;
           // si le fichier n'est pas une image
         } else {
+          // il y a un fichier dans la requete donc on efface l'ancienne image
+          fs.unlink(`images/${req.file.filename}`, () => {});
           // on récupère avec le parse req.body.sauce et on y ajoute la nouvelle image
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           const sauceObject = {
@@ -220,13 +225,16 @@ exports.modifySauce = (req, res, next) => {
         // en cas d'erreur un status 400 Bad Request et l'erreur en json
         .catch((error) => res.status(400).json({ error }));
     })
-    // en cas d'erreur 
-    .catch((error) => { 
-      // le fichier de la requete a été créé avec multer donc on l'éfface
-      fs.unlink(`images/${req.file.filename}`, () => {
-      });
-    // erreur 404 Not Found indique l'erreur en json
-    res.status(404).json({ error })});
+    // en cas d'erreur
+    .catch((error) => {
+      // si il y a un fichier avec la requete
+      if (req.file) {
+        // le fichier de la requete a été créé avec multer donc on l'éfface
+        fs.unlink(`images/${req.file.filename}`, () => {});
+      }
+      // erreur 404 Not Found indique l'erreur en json
+      res.status(404).json({ error });
+    });
 };
 //----------------------------------------------------------------------------------
 // LOGIQUE DELETESAUCE

@@ -13,6 +13,7 @@ const validator = require("validator");
 // LOGIQUE SIGNUP
 //----------------------------------------------------------------------------------
 // enregistrement de nouveaux utilisateurs grace a signup
+// pour améliorer la sécurité on pourrait demander une confirmation d'inscription via boite mail et rajouter une logique
 exports.signup = (req, res, next) => {
   // vérification dans la requete de l'email via validator
   const valideEmail = validator.isEmail(req.body.email);
@@ -58,6 +59,7 @@ exports.signup = (req, res, next) => {
 // LOGIQUE LOGIN
 //----------------------------------------------------------------------------------
 // l'identification d'utilisateur grace a login
+// on pourrait demander un autre type de vérification pour le login et y rajouter sa logique (captcha ou code reçu par téléphone avec un input à compléter)
 exports.login = (req, res, next) => {
   // on trouve l'adresse qui est rentrée par un utilisateur (requete)
   User.findOne({ email: req.body.email })
