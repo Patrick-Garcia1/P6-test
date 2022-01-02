@@ -12,8 +12,8 @@ module.exports = (req, res, next) => {
     const userId = decodedToken.userId;
     // on rajoute l'objet userId à l'objet requete
     req.auth = { userId };
-    // si les id sont différants entre requete et token
-    if (req.body.userId && req.body.userId !== userId) {
+    // si il y a un userId et que les id sont différants entre requete et token
+    if (req.body.userId && (req.body.userId !== userId)) {
       // renvoi un message
       throw error;
       // sinon c'est que c'est bon
