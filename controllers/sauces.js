@@ -159,6 +159,12 @@ exports.modifySauce = (req, res, next) => {
           req.file.mimetype === "image/tif" ||
           req.file.mimetype === "image/webp"
         ) {
+          console.log(sauce.body.imageUrl);
+          // on détermine le nom de lancien fichier image
+          const filename = sauce.imageUrl.split("/images/")[1];
+          // on efface le fichier image qui doit se faire remplacer
+          fs.unlink(`images/${filename}`, () => {
+          });
           // on extrait le sauce de la requete via le parse
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           const sauceObject = {
@@ -186,9 +192,10 @@ exports.modifySauce = (req, res, next) => {
         }
         // si il n'y a pas de fichier avec la modification (ps: il garde son image injectée à la création)
       } else {
+        // puisqu'il n'y a pas de fichier image, l'imageUrl de la requete sera par defaut l'ancienne imageUrl même si on modifie l'entrée avec postman
+        req.body.imageUrl = sauce.imageUrl;
+        // la sauce sera la requete
         const sauceObject = {
-          // on récupère avec le parse req.body.sauce et on y ajoute la nouvelle image
-          // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           ...req.body,
           ...immuable,
         };
@@ -215,7 +222,7 @@ exports.modifySauce = (req, res, next) => {
         .catch((error) => res.status(400).json({ error }));
     })
     // en cas d'erreur 404 Not Found et erreur en json
-    .catch((error) => res.status(404).json({ error }));
+    .catch((error) => res.status(404).json({ error: 'dtc' }));
 };
 //----------------------------------------------------------------------------------
 // LOGIQUE DELETESAUCE
