@@ -163,10 +163,15 @@ exports.modifySauce = (req, res, next) => {
           req.file.mimetype === "image/tif" ||
           req.file.mimetype === "image/webp"
         ) {
-          // on détermine le nom de lancien fichier image
+          // on détermine le nom de l'ancien fichier image
           const filename = sauce.imageUrl.split("/images/")[1];
+          // si ceci correspond à une partie du nom de l'image par defaut
+          const testImage = 'defaut/imagedefaut.png';
+          // si le nom de l'image ne correspont pas à l'image defaut
+          if(testImage != filename){
           // on efface le fichier image qui doit se faire remplacer
           fs.unlink(`images/${filename}`, () => {});
+          }
           // on extrait le sauce de la requete via le parse
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           const sauceObject = {
@@ -180,8 +185,15 @@ exports.modifySauce = (req, res, next) => {
           sauceBot = sauceObject;
           // si le fichier n'est pas une image
         } else {
-          // il y a un fichier dans la requete donc on efface l'ancienne image
-          fs.unlink(`images/${req.file.filename}`, () => {});
+          // on détermine le nom de l'ancien fichier image
+          const filename = sauce.imageUrl.split("/images/")[1];
+          // si ceci correspond à une partie du nom de l'image par defaut
+          const testImage = 'defaut/imagedefaut.png';
+          // si le nom de l'image ne correspont pas à l'image defaut
+          if(testImage != filename){
+          // on efface le fichier image qui doit se faire remplacer
+          fs.unlink(`images/${filename}`, () => {});
+          }
           // on récupère avec le parse req.body.sauce et on y ajoute la nouvelle image
           // dans req.body.sauce le sauce correspont à la key de postman pour ajouter les infos en texte
           const sauceObject = {
